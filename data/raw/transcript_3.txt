@@ -1,0 +1,128 @@
+MeetBrief Sample Transcript 3
+Meeting: Series A Investor Prep — Internal Dry Run
+Participants: Nadia (CEO), Tom (CFO), Chiara (Head of Product), Ben (VP Sales), Kenji (Head of Engineering)
+Duration: ~55 minutes
+Date: Week of June 1, 2026
+
+---
+
+Nadia: OK, so Sequoia has confirmed the partner meeting for June 18th. That's 17 days from now. The goal of today is to stress-test the narrative and figure out what we're not ready to answer. Tom, let's start with the numbers because that's usually where they probe hardest.
+
+Tom: Sure. ARR is at $2.1M, growing at roughly 15% month-over-month for the last quarter. Net revenue retention is 112%, which I think is our strongest number. Gross margin is 68%.
+
+Nadia: Where are we weak?
+
+Tom: Burn multiple is 1.8, which is acceptable but not impressive. And our CAC payback is 14 months, which will raise eyebrows for a SaaS at our stage. Most tier-one investors want to see under 12.
+
+Nadia: What's driving the 14 months?
+
+Ben: Honestly? Sales cycle. Our average deal takes 47 days to close. If we could get that to 30 days the payback period improves significantly.
+
+Nadia: Can we get it to 30 days?
+
+Ben: We've been running an experiment with a 14-day trial instead of 30 and the close rate is actually slightly better. If we commit to that as the standard motion I think we can get the cycle down.
+
+Nadia: Let's make that the standard. Ben, formalise the 14-day trial as our default go-to-market motion. Starting now, not after the fundraise.
+
+Ben: Done. I'll update the sales playbook and brief the team this week.
+
+Nadia: Tom, if we assume the sales cycle shortens to 30 days, what does CAC payback look like?
+
+Tom: Back of the envelope, somewhere around 11 months. Maybe 10 if we're lucky.
+
+Nadia: Good. That's a story we can tell. What about the burn multiple?
+
+Tom: We could improve it by slowing hiring, but I don't think that's the right call pre-raise. The more honest answer is we explain the investment thesis — we're burning to grow, and the NRR proves the unit economics work once a customer is in.
+
+Nadia: Agreed. We don't apologise for burn, we contextualise it. Tom, can you build a slide that shows burn multiple over time alongside NRR? I want to make the argument visually.
+
+Tom: I'll have it in the deck by end of day Wednesday.
+
+Nadia: Chiara, product narrative. What's the one thing you'd want Sequoia to understand about where the product is going?
+
+Chiara: I'd want them to understand that we're building a system of record for operational decisions, not just another productivity tool. Every feature we ship is about capturing and surfacing the decisions that run a company. That's a much bigger market than workflow automation.
+
+Nadia: I love that framing. Has it been in any of our materials before?
+
+Chiara: No, it's pretty new. I've been thinking about it for a few weeks.
+
+Nadia: It needs to be in the deck. Chiara, rewrite the product vision slide using that framing — system of record for operational decisions. I want to see it before we do the next dry run.
+
+Chiara: I'll have a draft by Tuesday.
+
+Nadia: Kenji, they're going to ask about technical differentiation and defensibility. What's our answer?
+
+Kenji: Our data model is the defensibility story. Every customer's decisions, actions, and outcomes are interconnected in a way that gets more valuable over time. The longer you use the product, the harder it is to leave because you'd lose your entire operational history. We also have some proprietary extraction logic that we've tuned over 18 months of usage data.
+
+Nadia: Is the extraction accuracy something we can quantify?
+
+Kenji: We're at 87% on decision extraction and 91% on action items, benchmarked against manually labelled data. That's measurable.
+
+Nadia: That's a good answer. Can you put together a one-pager on technical architecture and moat? Not for the deck itself but as a leave-behind if they ask for it.
+
+Kenji: Sure. I'll write it up by next Friday.
+
+Nadia: Ben, pipeline. What are we showing them?
+
+Ben: We have $840k in the pipeline for Q2. About 60% of that I'd call high confidence. We also have a handful of enterprise prospects that could each be $100k+ ARR but none of them are close to closing in the fundraising timeline.
+
+Nadia: I don't want to show them deals that won't close in time. That always backfires. Show them only what you'd genuinely bet on.
+
+Ben: Fair. I'll build a pipeline slide that shows the high-confidence deals plus a separate section for the enterprise opportunities with realistic timelines. I'll have it ready for the Wednesday dry run.
+
+Nadia: Good. Now the hard part — what questions aren't we ready to answer?
+
+Tom: The toughest one is probably why now. Why is this the moment to build this, and why haven't larger companies already solved it?
+
+Nadia: That's a fair challenge. Chiara, how would you answer that?
+
+Chiara: I'd say the LLM capabilities that make extraction reliable at this quality level didn't exist two years ago. Before that, you couldn't build this product and have it actually work. The timing is enabled by a genuine technology shift.
+
+Nadia: That's the answer. Tom, make sure the narrative in the deck addresses why now directly — don't make them ask.
+
+Tom: I'll add a why-now section to the intro slides.
+
+Nadia: What else might trip us up?
+
+Ben: They'll ask about competition. Notion, Confluence, even some of the newer AI note-taking tools. We need a crisp answer on why we win.
+
+Nadia: Chiara, can you put together a competitive landscape slide? I want it to be honest, not a feature checkbox grid. Show where we genuinely win and where we're weaker.
+
+Chiara: Yes. I'll have it for Wednesday.
+
+Nadia: Anything on the team slide? They always ask about key-person risk.
+
+Tom: We're probably thin on finance credibility at the CFO level given I'm technically a VP of Finance with a CFO title. If they dig in on that it could be awkward.
+
+Nadia: Let's not hide it. I'll address it proactively in my intro — say we're planning to bring in a CFO with public company experience post-raise. Is that the plan?
+
+Tom: That's been the informal plan, yes.
+
+Nadia: Then let's make it explicit. It's actually a good story — we're thoughtful about building the senior team we'll need at scale. Tom, let's align on the exact language for that so it sounds deliberate, not defensive.
+
+Tom: I'll draft a few lines and send them to you by tomorrow morning.
+
+Nadia: Perfect. OK, let me summarise where we are. Ben is switching to 14-day trial standard and updating the pipeline slide for Wednesday. Tom is building the burn vs NRR slide, the why-now section, and drafting the CFO language by tomorrow. Chiara is rewriting the product vision slide, writing the competitive landscape slide — both for Wednesday. Kenji is writing the technical moat one-pager by next Friday. And I'll do another dry run with the full team on Wednesday at 2pm. Does that work for everyone's calendar?
+
+[General agreement from the group]
+
+Nadia: Good. One last thing — we need a clean data room ready at least five days before the meeting. Tom, you own that. What do we need in it?
+
+Tom: Standard package: cap table, financials with actuals, customer list with ARR by account, key contracts, and the incorporation documents.
+
+Nadia: Any of that missing or not clean right now?
+
+Tom: The customer contracts folder is a mess. Some are signed, some are unsigned, some are just emails. I need someone to help me clean it up.
+
+Nadia: Kenji, can you ask one of the junior engineers to help Tom pull together the signed contracts? It's mostly a file organisation task.
+
+Kenji: Yeah I'll ask Preethi. She's good at that kind of thing.
+
+Nadia: Great. Tom, Preethi is your resource. Get the data room clean by June 13th — that gives us five clear days before the meeting. Anything else?
+
+[Silence]
+
+Nadia: OK. Wednesday at 2pm. Come with your slides ready.
+
+---
+END OF TRANSCRIPT

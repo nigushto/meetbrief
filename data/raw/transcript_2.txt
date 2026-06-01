@@ -1,0 +1,86 @@
+MeetBrief Sample Transcript 2
+Meeting: Weekly Growth & Metrics Review
+Participants: Ravi (CEO), Sophie (Head of Growth), James (Data Lead), Fiona (Head of Marketing)
+Duration: ~25 minutes
+Date: Week of June 1, 2026
+
+---
+
+Ravi: OK let's run through the numbers and make sure we leave with clear owners on anything that needs fixing. Sophie, what are we looking at this week?
+
+Sophie: So overall activation is up 4 points week-over-week, which is encouraging. We're at 38% now, up from 34%. The problem is that's almost entirely driven by the cohort from Fiona's LinkedIn campaign. Our organic activation is basically flat.
+
+Ravi: Meaning we can't rely on that number.
+
+Sophie: Right. The LinkedIn cohort is converting well in week one but we haven't seen week four retention data yet so it's too early to celebrate.
+
+Ravi: James, what does the funnel look like for the organic cohort?
+
+James: They're dropping off at the third step of onboarding — the data import step. About 60% of organic signups abandon there. It's been consistent for six weeks.
+
+Ravi: That's the thing Leila's team has been talking about fixing, right?
+
+Sophie: It's on the roadmap but it's not scheduled until later in Q3.
+
+Ravi: I think we need to pull it forward. If 60% of organic users are abandoning at the same step for six weeks, that's not a roadmap item, that's a crisis.
+
+Sophie: I agree. I'd push to get at least a quick fix — even just better copy and a progress indicator — shipped before we run any more paid acquisition. Otherwise we're just pouring money into a leaky bucket.
+
+Ravi: Fiona, what's your read?
+
+Fiona: I mean, I'd rather not pause the LinkedIn campaign because the CPL is really good right now. But I take the point about retention. Can we do both? Quick onboarding fix in parallel with keeping the campaign running?
+
+Ravi: I think so. Sophie, can you set up a call with Leila this week to scope what a quick fix looks like?
+
+Sophie: Yes, I'll reach out to Leila today.
+
+Ravi: Let's say we want something shipped within two weeks. Sophie, you own getting that scoped and making sure it's prioritised with the eng team.
+
+Sophie: Understood.
+
+Ravi: Fiona, keep the campaign running but I want weekly retention data on that LinkedIn cohort starting next Monday, not monthly. James, can you set that up?
+
+James: I'll build the retention view today and have it ready by Monday morning.
+
+Ravi: Good. What else?
+
+Sophie: Two other things. One — our referral programme is basically dead. We launched it three months ago and it's driving about 2% of signups. I think we either need to invest in it properly or turn it off. It's creating support noise without meaningful results.
+
+Ravi: What does investing properly mean?
+
+Sophie: Better incentives, probably. We're offering a $10 credit, which nobody cares about. The companies doing referral well are offering free months.
+
+Ravi: What would a free month cost us in real terms?
+
+James: Based on current ARPU, roughly $47 per successful referral.
+
+Ravi: And what's our current CAC?
+
+James: Blended CAC is around $180.
+
+Ravi: Then $47 for a referred customer is a no-brainer. Let's change the referral incentive to one free month. Sophie, can you work with James on the mechanics and get it live within 30 days?
+
+Sophie: Yes, we'll have it live by end of June.
+
+Ravi: Second thing you mentioned?
+
+Sophie: Oh, the pricing page. We've had three customers in the last month ask us if we have an annual plan. We don't. I think we're leaving money on the table.
+
+Ravi: Do we have a sense of what annual would look like?
+
+Sophie: I haven't modelled it yet. I could put something together.
+
+Ravi: Yes, do that. Come back to me with a recommendation next week. If the numbers work, I want to move fast on it — this isn't a three-month project.
+
+Sophie: I'll have a pricing model to you by next Friday.
+
+Ravi: Perfect. That's everything I had. Anyone else?
+
+Fiona: Nothing from me.
+
+James: Same.
+
+Ravi: Alright, short and sharp. Thanks everyone.
+
+---
+END OF TRANSCRIPT

@@ -1,0 +1,74 @@
+MeetBrief Sample Transcript 1
+Meeting: Product Strategy All-Hands
+Participants: Priya (CEO), Marcus (CTO), Leila (Head of Product), Dan (Head of Sales), Ananya (Lead Engineer)
+Duration: ~45 minutes
+Date: Week of June 1, 2026
+
+---
+
+Priya: Alright, let's get started. We've got a lot to cover today. The main thing I want to resolve by end of this call is what we're shipping in Q3 and what we're explicitly cutting. Marcus, you want to kick us off with the infra update?
+
+Marcus: Sure. So the good news is we finished the database migration last week. We're fully on Postgres now, which unblocks the search improvements Leila's team has been waiting on. The not-so-good news is that the migration surfaced some performance issues in the reporting pipeline. We're seeing 3-4 second load times on the dashboard for accounts with more than 500 records.
+
+Priya: How bad is that in practice? Dan, you're closest to the customers on this.
+
+Dan: It's bad. I've had two enterprise prospects specifically call it out in trials this month. One of them, the Hartwell account, basically said they'd sign if we fix it, and walk if we don't. That's an $80k ARR deal.
+
+Priya: OK so that becomes the number one priority. Marcus, what does fixing it actually take?
+
+Marcus: Ananya has been looking at it. Ananya, do you want to take this?
+
+Ananya: Yeah, so the issue is we're running full table scans on every dashboard load. We need to add composite indexes on the accounts and events tables. I can have a fix in staging by end of this week, and if testing goes well we can ship to production by next Wednesday.
+
+Priya: That's the answer I was hoping for. Let's make that official. Ananya owns the dashboard performance fix, target ship date is next Wednesday June 11th. Marcus, you're reviewing the staging deployment?
+
+Marcus: Yes, I'll review it.
+
+Priya: Good. Dan, can you hold Hartwell until Wednesday?
+
+Dan: I'll tell them we have a fix in testing and we'll give them access to a staging environment to verify. That should buy us the week.
+
+Priya: Do that today. OK, moving on. Leila, Q3 roadmap.
+
+Leila: Right. So we've had three things on the Q3 list: the new onboarding flow, the Slack integration, and the AI summary feature. Based on what just happened with the performance issue taking engineering bandwidth, I think we need to make a call on which two of those three we're actually committing to.
+
+Priya: What's your read?
+
+Leila: I'd cut the AI summary feature for Q3. It's the most technically complex, it has the most unknowns, and honestly the customer research doesn't strongly validate it yet. Onboarding and Slack are both directly tied to the retention problems we've been seeing.
+
+Marcus: I agree with cutting AI summary. Ananya and I were talking about it last week and the LLM integration alone is probably a six-week build if we do it properly.
+
+Dan: From a sales perspective I'd agree. Slack integration is the number one thing prospects ask about. Onboarding I care about less from a sales angle but I understand the retention argument.
+
+Priya: OK, we're aligned. Q3 is onboarding flow and Slack integration. AI summary moves to Q4. Leila, can you update the roadmap doc and share it with the team by end of day Thursday?
+
+Leila: Yes, I'll have it done by Thursday EOD.
+
+Priya: And I want a one-pager on why we pushed AI summary — framing it as a deliberate decision, not a slip. Something we can share with the board. Leila, can you write that too or do you want me to take it?
+
+Leila: I'll write it. I'll include it with the roadmap update.
+
+Priya: Perfect. Dan, I want you to put together a competitive brief on how our Slack integration should be positioned against Notion and Linear. There are at least two competitors who've shipped something similar in the last 60 days and we need to know where we stand.
+
+Dan: I can have that to you by end of next week. Is Friday the 13th ok?
+
+Priya: That works. Ananya, one more thing — once the dashboard fix is out, I want you to do a quick audit of anything else in the product that could cause similar performance issues before an enterprise customer hits it. Can you give me a written summary of findings?
+
+Ananya: Yeah, I'll do a pass after the fix ships. Give me until the following Monday — June 16th.
+
+Priya: Good. Last thing before we close — the hiring plan. Marcus, where are we on the backend engineer role?
+
+Marcus: We have three candidates in final rounds. I'd like to make an offer to one of them this week. I'll loop in Priya for the offer call.
+
+Priya: Let's do it. Can you send me the candidate profiles today so I can review before the call?
+
+Marcus: Sending them over right after this.
+
+Priya: Great. I think that's everything. To summarise what we decided: dashboard performance fix ships Wednesday, Ananya owns it. Q3 is onboarding and Slack, AI summary to Q4, Leila updates roadmap by Thursday. Dan is holding Hartwell and doing a competitive brief by June 13th. And Marcus is moving forward on the backend hire. Any questions?
+
+[No questions from the group]
+
+Priya: Good. Talk next week.
+
+---
+END OF TRANSCRIPT
