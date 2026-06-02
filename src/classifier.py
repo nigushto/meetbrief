@@ -141,7 +141,7 @@ Return ONLY the JSON array. No other text.
 
 ## Transcript
 
-{transcript}
+
 """
 
 
@@ -170,13 +170,15 @@ def classify_transcript(transcript_text, transcript_id="unknown"):
     VALID_LABELS = {"decision", "action", "question"}
 
     # --- 1. Build the prompt ---
-    prompt = CLASSIFIER_PROMPT.format(transcript=transcript_text)
+    # Use concatenation — prompt contains JSON braces that break .format()
+    prompt = CLASSIFIER_PROMPT + "\n" + transcript_text
 
     # --- 2. Call the API ---
     print(f"  Calling Claude API for {transcript_id}...")
     response = client.messages.create(
         model="claude-sonnet-4-6",
         max_tokens=2000,
+        temperature=0,        # add this line
         messages=[
             {"role": "user", "content": prompt}
         ]
