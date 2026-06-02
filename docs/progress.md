@@ -59,3 +59,37 @@ failure patterns. Write prompt v2 fixing the top 3 failures. Target: F1 above
 70% across all labels before moving to the extractor agent in Week 3.
 
 ---
+
+## Week 2 — Classifier prompt v1, eval iteration
+
+**Final score: 78.9% F1** (Precision 93.8%, Recall 68.2%)
+temperature=0, ground truth: 44 items (26 actions, 13 decisions, 5 questions)
+
+**What I built**
+Wrote classifier prompt v1 with 6 few-shot examples drawn from the actual
+transcripts. Built diagnose.py to show exactly which items were missed vs
+incorrectly predicted. Iterated to v2, v3, v4 — all produced lower scores.
+Reverted to v1.
+
+**Key finding from iteration**
+Each prompt change made overall F1 worse, not better. Root cause: ground
+truth had 4 mislabelled items (decisions that were genuinely actions).
+Correcting the ground truth recovered the score more effectively than any
+prompt change. At 78.9% F1 the model has hit a natural ceiling for a
+classification-only approach — further gains require the extractor layer.
+
+**What I learned about AI PM eval work**
+Three things that don't show up in courses:
+1. LLMs are non-deterministic — always set temperature=0 for eval runs
+   or your scores will shift between runs for no reason.
+2. When iterating makes scores consistently worse, suspect the benchmark
+   before suspecting the model. Your ground truth can be wrong.
+3. The difference between precision and recall failure modes matters.
+   This model has near-perfect precision (93.8%) but weak recall (68.2%)
+   — it's cautious, not hallucinating. That's a different fix than a
+   model that extracts everything including noise.
+
+**What's next (Week 3)**
+Build the extractor agent: takes classifier output and produces structured
+JSON with owner, due_date, and confidence score for each item. Wire the
+two steps into a pipeline. This is where the product starts to feel real.
