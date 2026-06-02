@@ -43,8 +43,7 @@ EXTRACTION_TOOL = {
     }
 }
 
-EXTRACTOR_PROMPT = """You are reviewing a single item extracted from a meeting transcript.
-The item has already been classified as a {label} by a previous step.
+EXTRACTOR_PROMPT_BASE = """You are reviewing a single item extracted from a meeting transcript.
 
 Your job is to:
 1. Verify the classification makes sense given the item text
@@ -67,18 +66,22 @@ Your job is to:
 0.0 — 0.5 : Significant uncertainty. Classification may be wrong, or key fields
              cannot be determined. Recommend human review.
 
-## Item to review
-
-Label : {label}
-Text  : {text}
-Owner (from classifier, may be incomplete): {owner}
-Date  (from classifier, may be incomplete): {due_date}
-
-Call extract_structured_item with your assessment.
+## Important: resolving relative dates
+When converting relative date references ("this week", "next Friday", "end of
+month", "today", "tomorrow") to ISO dates, use the meeting date provided below
+as your anchor. If no meeting date is provided, leave due_date blank.
+Examples given meeting date 2026-06-01 (Monday):
+  "today"        → 2026-06-01
+  "tomorrow"     → 2026-06-02
+  "this week"    → 2026-06-05  (end of week = Friday)
+  "next Monday"  → 2026-06-08
+  "next Friday"  → 2026-06-06  (the coming Friday, not two weeks out)
+  "end of month" → 2026-06-30
+  "in two weeks" → 2026-06-15
 """
 
 
-def extract_item(classified_item):
+def extract_item(classified_item, meeting_date=None):
     """
     Enriches a single classified item with structured fields and confidence score.
 
@@ -98,11 +101,23 @@ def extract_item(classified_item):
             confidence_reason (str)  - one sentence explaining the score
     """
 
-    prompt = EXTRACTOR_PROMPT.format(
-        label=classified_item["label"],
-        text=classified_item["text"],
-        owner=classified_item["owner"] or "not identified",
-        due_date=classified_item["due_date"] or "not stated"
+    # Build prompt via concatenation — avoids .format() conflicts with special chars
+    date_line = f"Meeting date: {meeting_date}" if meeting_date else "Meeting date: not provided"
+    label     = classified_item["label"]
+    text      = classified_item["text"]
+    owner     = classified_item["owner"] or "not identified"
+    due_date  = classified_item["due_date"] or "not stated"
+
+    prompt = (
+        EXTRACTOR_PROMPT_BASE
+        + "\n## Meeting context\n"
+        + date_line + "\n"
+        + "\n## Item to review\n"
+        + "\nThe item has been classified as a " + label + ".\n"
+        + "\nText  : " + text + "\n"
+        + "Owner (from classifier, may be incomplete): " + owner + "\n"
+        + "Date  (from classifier, may be incomplete): " + due_date + "\n"
+        + "\nCall extract_structured_item with your assessment."
     )
 
     response = client.messages.create(
@@ -148,7 +163,7 @@ def extract_item(classified_item):
     }
 
 
-def extract_items(classified_items, verbose=True):
+def extract_items(classified_items, verbose=True, meeting_date=None):
     """
     Enriches a list of classified items by running each through the extractor.
 
@@ -167,7 +182,7 @@ def extract_items(classified_items, verbose=True):
         if verbose:
             print(f"  Extracting item {i+1}/{total}: [{item['label']:10s}] {item['text'][:55]}...")
 
-        result = extract_item(item)
+        result = extract_item(item, meeting_date=meeting_date)
         enriched.append(result)
 
     return enriched

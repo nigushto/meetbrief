@@ -29,18 +29,20 @@ if __name__ == "__main__":
         "avg_confidence":  0.0,
     }
 
+    # Meeting dates added — allows extractor to resolve relative date references
+    # All 3 synthetic transcripts are from the week of June 1, 2026
     transcript_files = [
-        ("transcript_1.txt", "transcript_1"),
-        ("transcript_2.txt", "transcript_2"),
-        ("transcript_3.txt", "transcript_3"),
+        ("transcript_1.txt", "transcript_1", "2026-06-01"),
+        ("transcript_2.txt", "transcript_2", "2026-06-01"),
+        ("transcript_3.txt", "transcript_3", "2026-06-01"),
     ]
 
     conf_sum = 0.0
     run_count = 0
 
-    for filename, tid in transcript_files:
+    for filename, tid, meeting_date in transcript_files:
         print(f"Running pipeline on {tid}...")
-        result = run_pipeline(filename, tid, verbose=False)
+        result = run_pipeline(filename, tid, verbose=False, meeting_date=meeting_date)
 
         all_enriched.extend(result["all_items"])
 
@@ -69,7 +71,7 @@ if __name__ == "__main__":
 
     # --- 6. Per-transcript field accuracy breakdown ---
     print("Per-transcript field accuracy:")
-    for filename, tid in transcript_files:
+    for filename, tid, meeting_date in transcript_files:
         gt_for   = [g for g in ground_truth    if g["transcript_id"] == tid]
         pred_for = [p for p in all_enriched if p["transcript_id"] == tid]
         fr = score_fields(pred_for, gt_for)

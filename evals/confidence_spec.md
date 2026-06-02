@@ -157,3 +157,8 @@ v1. A future refinement could introduce label-specific thresholds —
 decisions without owners are expected to have lower confidence, so a
 lower threshold (e.g. 0.65) for ownerless decisions may reduce
 unnecessary human review without introducing errors.
+
+v1.1 — Week 4. Meeting date context added to extractor prompt.
+Explicit dates and clear relative references resolve correctly.
+Vague references ("this week", "next Friday") remain inconsistent.
+Full calendar context (day of week) planned for Week 8.

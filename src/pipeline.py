@@ -10,7 +10,7 @@ PIPELINE_VERSION  = "v1"
 CONFIDENCE_THRESHOLD = 0.7
 
 
-def run_pipeline(transcript_filename, transcript_id=None, verbose=True):
+def run_pipeline(transcript_filename, transcript_id=None, verbose=True, meeting_date=None):
     """
     Runs the full MeetBrief pipeline on a single transcript file.
 
@@ -42,6 +42,8 @@ def run_pipeline(transcript_filename, transcript_id=None, verbose=True):
     if verbose:
         print(f"\n{'=' * 60}")
         print(f"  MeetBrief Pipeline {PIPELINE_VERSION} — {transcript_id}")
+        if meeting_date:
+            print(f"  Meeting date: {meeting_date}")
         print(f"{'=' * 60}")
 
     # --- Step 1: Classify ---
@@ -59,7 +61,7 @@ def run_pipeline(transcript_filename, transcript_id=None, verbose=True):
         print(f"\n[2/3] Extracting structured fields + confidence scores...")
         print(f"      ({len(classified)} API calls — ~{len(classified) * 3}s)\n")
 
-    enriched = extract_items(classified, verbose=verbose)
+    enriched = extract_items(classified, verbose=verbose, meeting_date=meeting_date)
 
     # --- Step 3: Apply guardrail ---
     if verbose:
