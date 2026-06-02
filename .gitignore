@@ -1,10 +1,10 @@
 # Virtual environment
 meetbrief-env/
 
-# API keys and secrets
+# API keys
 .env
 
-# Python cache files
+# Python cache
 __pycache__/
 *.pyc
 *.pyo
