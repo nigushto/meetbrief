@@ -259,7 +259,145 @@ def dummy_predictor(ground_truth, forced_label="action"):
         })
     return predictions
 
-
+def score_fields(enriched_predictions, ground_truth):
+    """
+    Measures field-level accuracy of the extractor — separately from label accuracy.
+ 
+    For every enriched prediction that matches a ground truth item (by label +
+    text), checks whether the owner and due_date fields are correct.
+ 
+    This measures extractor quality independently of classifier quality.
+    A correct label with a wrong owner is a classifier win but extractor fail.
+ 
+    Args:
+        enriched_predictions (list[dict]) - output from extract_items()
+                                            must have: label, text, owner, due_date
+        ground_truth         (list[dict]) - loaded via load_ground_truth()
+ 
+    Returns:
+        dict with keys:
+            owner_accuracy     (float) - % of matched items where owner is correct
+            date_accuracy      (float) - % of matched items where due_date is correct
+            owner_correct      (int)   - count of correct owner extractions
+            owner_scoreable    (int)   - count of GT items that have an owner to check
+            date_correct       (int)   - count of correct date extractions
+            date_scoreable     (int)   - count of GT items that have a date to check
+            matched_items      (int)   - total items matched between pred and GT
+    """
+ 
+    def text_match(pred_text, gt_text, threshold=0.4):
+        pred_words = set(pred_text.lower().split())
+        gt_words   = set(gt_text.lower().split())
+        if not gt_words:
+            return False
+        return len(pred_words & gt_words) / len(gt_words) >= threshold
+ 
+    def owner_match(pred_owner, gt_owner):
+        if not gt_owner:
+            return None                      # nothing to check — skip
+        if not pred_owner:
+            return False                     # GT has owner, pred missed it
+        return pred_owner.lower().strip() == gt_owner.lower().strip()
+ 
+    def date_match(pred_date, gt_date):
+        if not gt_date:
+            return None                      # nothing to check — skip
+        if not pred_date:
+            return False                     # GT has date, pred missed it
+        return pred_date.strip() == gt_date.strip()
+ 
+    gt_matched   = [False] * len(ground_truth)
+    owner_correct   = 0
+    owner_scoreable = 0
+    date_correct    = 0
+    date_scoreable  = 0
+    matched_items   = 0
+ 
+    for pred in enriched_predictions:
+        for i, gt in enumerate(ground_truth):
+            if gt_matched[i]:
+                continue
+            if pred["label"] == gt["label"] and text_match(pred["text"], gt["text"]):
+                gt_matched[i] = True
+                matched_items += 1
+ 
+                # --- Score owner ---
+                o = owner_match(pred.get("owner", ""), gt["owner"])
+                if o is not None:
+                    owner_scoreable += 1
+                    if o:
+                        owner_correct += 1
+ 
+                # --- Score due_date ---
+                d = date_match(pred.get("due_date", ""), gt["due_date"])
+                if d is not None:
+                    date_scoreable += 1
+                    if d:
+                        date_correct += 1
+ 
+                break
+ 
+    owner_accuracy = (owner_correct / owner_scoreable
+                      if owner_scoreable > 0 else 0.0)
+    date_accuracy  = (date_correct  / date_scoreable
+                      if date_scoreable  > 0 else 0.0)
+ 
+    return {
+        "owner_accuracy":   round(owner_accuracy, 3),
+        "date_accuracy":    round(date_accuracy,  3),
+        "owner_correct":    owner_correct,
+        "owner_scoreable":  owner_scoreable,
+        "date_correct":     date_correct,
+        "date_scoreable":   date_scoreable,
+        "matched_items":    matched_items,
+    }
+ 
+ 
+def print_full_eval_report(label_result, field_result, pipeline_stats):
+    """
+    Prints the complete Week 3 eval scorecard covering all three layers:
+      1. Classifier quality  (label F1)
+      2. Extractor quality   (field-level accuracy)
+      3. Guardrail stats     (confidence distribution)
+ 
+    Args:
+        label_result    (dict) - output from score()
+        field_result    (dict) - output from score_fields()
+        pipeline_stats  (dict) - stats dict from run_pipeline() result
+    """
+ 
+    print(f"\n{'=' * 60}")
+    print(f"  MeetBrief — Full Eval Scorecard (Week 3)")
+    print(f"{'=' * 60}")
+ 
+    print(f"\n  [1] Classifier quality")
+    print(f"      Overall F1       : {label_result['f1']:.1%}")
+    print(f"      Precision        : {label_result['precision']:.1%}")
+    print(f"      Recall           : {label_result['recall']:.1%}")
+    print(f"      Per-label:")
+    for lbl, s in sorted(label_result["per_label"].items()):
+        print(f"        {lbl:12s}  F1={s['f1']:.1%}  "
+              f"P={s['precision']:.1%}  R={s['recall']:.1%}")
+ 
+    print(f"\n  [2] Extractor field accuracy")
+    print(f"      Owner accuracy   : {field_result['owner_accuracy']:.1%}"
+          f"  ({field_result['owner_correct']}/{field_result['owner_scoreable']} "
+          f"with a GT owner)")
+    print(f"      Date accuracy    : {field_result['date_accuracy']:.1%}"
+          f"  ({field_result['date_correct']}/{field_result['date_scoreable']} "
+          f"with a GT date)")
+    print(f"      Items matched    : {field_result['matched_items']}")
+ 
+    print(f"\n  [3] Guardrail stats")
+    print(f"      Total items      : {pipeline_stats['total_items']}")
+    print(f"      Confident (>=0.7): {pipeline_stats['confident_count']}"
+          f"  ({round(pipeline_stats['confident_count']/pipeline_stats['total_items']*100)}%)")
+    print(f"      Flagged   (<0.7) : {pipeline_stats['flagged_count']}"
+          f"  ({round(pipeline_stats['flagged_count']/pipeline_stats['total_items']*100)}%)")
+    print(f"      Avg confidence   : {pipeline_stats['avg_confidence']:.2f}")
+ 
+    print(f"\n{'=' * 60}\n")
+    
 # --- Run this file directly to verify everything loads correctly ---
 if __name__ == "__main__":
     print("Loading ground truth...")

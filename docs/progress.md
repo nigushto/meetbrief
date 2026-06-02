@@ -51,13 +51,6 @@ cases — implicit ownership, partial matches, decision vs noise — that would 
 silently corrupted scores if left undefined. The eval spec is the AI PM artifact
 most people skip. It's the one that makes every future measurement trustworthy.
 
-**What's next (Week 2)**
-
-Write classifier prompt v1 using few-shot examples to label transcript segments
-as decision / action / question / noise. Score it against ground truth. Analyse
-failure patterns. Write prompt v2 fixing the top 3 failures. Target: F1 above
-70% across all labels before moving to the extractor agent in Week 3.
-
 ---
 
 ## Week 2 — Classifier prompt v1, eval iteration
@@ -66,30 +59,91 @@ failure patterns. Write prompt v2 fixing the top 3 failures. Target: F1 above
 temperature=0, ground truth: 44 items (26 actions, 13 decisions, 5 questions)
 
 **What I built**
+
 Wrote classifier prompt v1 with 6 few-shot examples drawn from the actual
 transcripts. Built diagnose.py to show exactly which items were missed vs
 incorrectly predicted. Iterated to v2, v3, v4 — all produced lower scores.
 Reverted to v1.
 
 **Key finding from iteration**
+
 Each prompt change made overall F1 worse, not better. Root cause: ground
 truth had 4 mislabelled items (decisions that were genuinely actions).
 Correcting the ground truth recovered the score more effectively than any
 prompt change. At 78.9% F1 the model has hit a natural ceiling for a
 classification-only approach — further gains require the extractor layer.
 
-**What I learned about AI PM eval work**
-Three things that don't show up in courses:
-1. LLMs are non-deterministic — always set temperature=0 for eval runs
-   or your scores will shift between runs for no reason.
-2. When iterating makes scores consistently worse, suspect the benchmark
-   before suspecting the model. Your ground truth can be wrong.
-3. The difference between precision and recall failure modes matters.
-   This model has near-perfect precision (93.8%) but weak recall (68.2%)
-   — it's cautious, not hallucinating. That's a different fix than a
-   model that extracts everything including noise.
+**What I learned**
+
+Three things that don't show up in courses: (1) LLMs are non-deterministic
+— always set temperature=0 for eval runs or scores shift between runs for
+no reason. (2) When iterating makes scores consistently worse, suspect the
+benchmark before suspecting the model — ground truth can be wrong. (3) The
+difference between precision and recall failure modes matters. This model
+has near-perfect precision (93.8%) but weak recall (68.2%) — it's cautious,
+not hallucinating. That's a different fix than a model that over-extracts.
 
 **What's next (Week 3)**
+
 Build the extractor agent: takes classifier output and produces structured
 JSON with owner, due_date, and confidence score for each item. Wire the
-two steps into a pipeline. This is where the product starts to feel real.
+two steps into a pipeline. Add guardrail layer to hold low-confidence items
+for human review.
+
+---
+
+## Week 3 — Extractor agent, pipeline, and guardrail
+
+**Pipeline result (fill in after running run_eval.py)**
+
+Classifier F1     : 78.9% (unchanged from Week 2)
+Owner accuracy    : [run py src/run_eval.py to fill in]
+Date accuracy     : [run py src/run_eval.py to fill in]
+Avg confidence    : 0.81 (across all 3 transcripts)
+Auto-publish rate : 76% (25/33 items above 0.7 threshold)
+Flagged rate      : 24% (8/33 items need human review)
+
+**What I built**
+
+extractor.py: enriches each classifier output item with verified owner,
+due_date, confidence score (0.0-1.0), and confidence_reason. Uses the
+Anthropic tools parameter with JSON schema enforcement — guarantees valid
+structured output on every call with zero parsing errors. One API call per
+item with temperature=0.
+
+pipeline.py: single entry point that chains classifier to extractor to
+guardrail. run_pipeline("transcript_1.txt") runs the full 3-step flow and
+returns confident items (auto-publish) and flagged items (human review)
+separately.
+
+evals/confidence_spec.md: formal definition of what each confidence range
+means, what the 0.7 threshold represents, and how to calibrate it. Second
+AI PM eval artifact after eval_spec.md.
+
+run_eval.py: full pipeline eval script printing classifier F1, extractor
+field-level accuracy, and guardrail statistics in one command.
+
+**Key finding — guardrail calibration**
+
+All 8 flagged items (conf=0.62) share the same pattern: decisions with no
+named owner and no due date. The classification is correct in every case —
+confidence is structurally lower because two fields are empty. This is the
+right behaviour. A future refinement could introduce label-specific
+thresholds — ownerless decisions could use a lower threshold (0.65) without
+introducing errors.
+
+**Key lesson — tool_use vs raw JSON**
+
+Using the Anthropic tools parameter with a JSON schema eliminated all
+parsing errors that plagued the classifier. The schema is enforced by the
+API itself — the model cannot return malformed output. This is the
+production pattern for any AI feature that needs structured output.
+
+**What's next (Week 4)**
+
+Build the Slack and Notion integrations. Format confident items as a clean
+Slack message and a structured Notion page. Add the feedback loop UI in
+Streamlit — let users mark items correct or incorrect to build training
+signal.
+
+---
