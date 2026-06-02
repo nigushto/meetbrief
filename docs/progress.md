@@ -139,6 +139,20 @@ parsing errors that plagued the classifier. The schema is enforced by the
 API itself — the model cannot return malformed output. This is the
 production pattern for any AI feature that needs structured output.
 
+**Week 3 progress entry:**
+Classifier F1     : 78.9% (unchanged from Week 2)
+Owner accuracy    : 80.6% (23/28 items with a GT owner)
+Date accuracy     : 38.1% (7/21 items with a GT date) — known gap, fix in Week 4
+Avg confidence    : 0.81
+Auto-publish rate : 76% (25/33 items above 0.7 threshold)
+Flagged rate      : 24% (8/33 items need human review)
+
+Date accuracy is 38.1% — the primary weakness. Root cause: the extractor
+has no knowledge of the meeting date, so relative date references ("this
+week", "next Friday", "17 days from now") cannot be converted to ISO dates.
+Transcript_3 has 11 date-scoreable items and gets 9 wrong for this reason.
+Fix planned for Week 4: pass meeting date as context to the extractor prompt.
+
 **What's next (Week 4)**
 
 Build the Slack and Notion integrations. Format confident items as a clean
