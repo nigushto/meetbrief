@@ -160,4 +160,56 @@ Slack message and a structured Notion page. Add the feedback loop UI in
 Streamlit — let users mark items correct or incorrect to build training
 signal.
 
+**Week 4 — Date fix, Slack integration, and Streamlit UI**
+Pipeline scores (end of week)
+Classifier F1     : 78.9% (unchanged)
+Owner accuracy    : 80.6% (23/28 items with a GT owner)
+Date accuracy     : ~50% on T1/T2, 18.2% on T3 — partial improvement
+Avg confidence    : 0.81
+Auto-publish rate : 76% (25/33 items)
+Flagged rate      : 24% (8/33 items)
+What I built
+Meeting date context fix: added a meeting_date parameter to
+run_pipeline() and injected it into the extractor prompt as a
+dedicated Meeting context section. Explicit dates and clear relative
+references ("Monday morning", "end of June") now resolve correctly.
+Vague references ("this week", "next Friday") remain inconsistent —
+root cause is genuine ambiguity, not a prompt gap. Deferred full
+calendar context (day of week) to Week 8.
+slack_sender.py: formats pipeline output into a structured Slack
+Block Kit message with separate sections for decisions, actions, and
+open questions. Confident items auto-publish. Flagged items appear as
+a count with a review prompt — not shown in detail to avoid noise.
+Includes a preview_slack_message() function for dry-run verification
+before any API call. Tested end-to-end — messages arriving correctly
+in Slack channel.
+app.py: full Streamlit UI with four sections — transcript input with
+meeting date picker, extracted results grouped by label, flagged item
+review with Confirm/Reject buttons, and a Send to Slack button. State
+persists across reruns using st.session_state. Pipeline result,
+feedback decisions, and send status all survive button clicks without
+resetting. Feedback saved to data/feedback.csv with timestamp — first
+real training signal for future classifier improvement.
+Notion skipped for MVP: dropped from v1 scope. Slack alone is
+sufficient for a demo-ready product. Notion added to the v2 roadmap
+alongside calendar integration.
+Key finding — date accuracy ceiling
+Three iterations of date prompt fixes produced no meaningful
+improvement on transcript_3. Root cause: "this week" and "next Friday"
+are genuinely ambiguous without knowing the day of week of the meeting.
+Passing ISO date alone is insufficient — fix requires passing the full
+date context including day of week ("2026-06-01, Monday"). Planned for
+Week 8. Lesson: some accuracy gaps are architectural, not prompt gaps.
+Knowing the difference saves iteration cycles.
+Key lesson — dry-run before API calls
+Spent too many full eval runs diagnosing prompt issues that a 2-second
+dry-run print would have caught. From Week 5 onwards: always print the
+exact prompt the model will receive before running any eval. This is
+now a standard step in every iteration.
+Key lesson — Streamlit session_state
+Streamlit reruns the entire script on every user interaction. Without
+st.session_state, the pipeline result disappears on every button click.
+Every piece of state that must survive a rerun needs explicit storage
+in session_state. This is the most common source of confusing Streamlit
+bugs and the first thing to check when UI behaviour seems wrong.
 ---
