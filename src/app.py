@@ -8,47 +8,59 @@ import streamlit as st
 sys.path.insert(0, os.path.dirname(__file__))
 
 from pipeline     import run_pipeline
-from slack_sender import send_to_slack, preview_slack_message
+from slack_sender import send_to_slack
 
-# --- Page config ---
+# ================================================================
+# PAGE CONFIG
+# ================================================================
 st.set_page_config(
     page_title="MeetBrief",
     page_icon="📋",
     layout="wide"
 )
 
-# --- Session state initialisation ---
-# Must be done before any widget renders
-if "pipeline_result" not in st.session_state:
-    st.session_state.pipeline_result = None
-if "feedback" not in st.session_state:
-    st.session_state.feedback = {}   # key: item index, value: "correct" | "incorrect"
-if "slack_sent" not in st.session_state:
-    st.session_state.slack_sent = False
-if "feedback_saved" not in st.session_state:
-    st.session_state.feedback_saved = False
+# ================================================================
+# SESSION STATE INITIALISATION
+# ================================================================
+for key, default in [
+    ("pipeline_result", None),
+    ("feedback",        {}),
+    ("slack_sent",      False),
+    ("feedback_saved",  False),
+    ("history",         []),     # list of past pipeline results this session
+]:
+    if key not in st.session_state:
+        st.session_state[key] = default
 
 
-# --- Helper: feedback CSV path ---
+# ================================================================
+# CONSTANTS
+# ================================================================
 FEEDBACK_CSV = os.path.join(os.path.dirname(__file__), "..", "data", "feedback.csv")
+
+DAY_NAMES = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"]
+
+
+# ================================================================
+# HELPERS
+# ================================================================
+def meeting_date_string(date_obj):
+    """Returns e.g. '2026-06-01 (Monday)' — gives model day-of-week context."""
+    day_name = DAY_NAMES[date_obj.weekday()]
+    return f"{date_obj.isoformat()} ({day_name})"
 
 
 def save_feedback_to_csv(pipeline_result, feedback_dict):
     """Appends feedback rows to data/feedback.csv."""
-    timestamp = datetime.datetime.now().isoformat()
-
-    file_exists = os.path.exists(FEEDBACK_CSV)
-    is_empty    = not file_exists or os.path.getsize(FEEDBACK_CSV) == 0
+    timestamp  = datetime.datetime.now().isoformat()
+    is_empty   = not os.path.exists(FEEDBACK_CSV) or os.path.getsize(FEEDBACK_CSV) == 0
+    fieldnames = ["transcript_id","label","text","owner",
+                  "due_date","confidence","feedback","timestamp"]
 
     with open(FEEDBACK_CSV, "a", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=[
-            "transcript_id", "label", "text", "owner",
-            "due_date", "confidence", "feedback", "timestamp"
-        ])
-
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
         if is_empty:
             writer.writeheader()
-
         for idx, decision in feedback_dict.items():
             item = pipeline_result["flagged"][idx]
             writer.writerow({
@@ -64,46 +76,106 @@ def save_feedback_to_csv(pipeline_result, feedback_dict):
 
 
 def label_icon(label):
-    icons = {"decision": "✅", "action": "📌", "question": "❓"}
-    return icons.get(label, "•")
+    return {"decision": "✅", "action": "📌", "question": "❓"}.get(label, "•")
+
+
+def reset_session():
+    """Clears current run state — does not clear history."""
+    st.session_state.pipeline_result = None
+    st.session_state.feedback        = {}
+    st.session_state.slack_sent      = False
+    st.session_state.feedback_saved  = False
+
+
+# ================================================================
+# SIDEBAR — session history
+# ================================================================
+with st.sidebar:
+    st.markdown("### 📋 MeetBrief")
+    st.caption("AI meeting debrief engine")
+    st.divider()
+
+    if st.session_state.history:
+        st.markdown("**This session**")
+        for i, past in enumerate(reversed(st.session_state.history)):
+            idx      = len(st.session_state.history) - 1 - i
+            label    = past.get("_title", past["transcript_id"])
+            n_items  = past["stats"]["total_items"]
+            n_flag   = past["stats"]["flagged_count"]
+            caption  = f"{n_items} items · {n_flag} flagged"
+            if st.button(f"📄 {label}", key=f"history_{idx}",
+                         help=caption, use_container_width=True):
+                st.session_state.pipeline_result = past
+                st.session_state.feedback        = {}
+                st.session_state.slack_sent      = False
+                st.session_state.feedback_saved  = False
+                st.rerun()
+            st.caption(caption)
+    else:
+        st.caption("Past runs will appear here.")
+
+    st.divider()
+    if st.button("🗑️ Clear current run", use_container_width=True):
+        reset_session()
+        st.rerun()
 
 
 # ================================================================
 # HEADER
 # ================================================================
 st.title("📋 MeetBrief")
-st.caption("Paste a meeting transcript → extract decisions, actions and questions → send to Slack")
+st.caption("Upload or paste a transcript → extract decisions, actions, questions → send to Slack")
 st.divider()
 
 
 # ================================================================
 # SECTION 1 — INPUT
 # ================================================================
-st.subheader("1. Paste your transcript")
+st.subheader("1. Add your transcript")
 
 col_input, col_config = st.columns([3, 1])
 
 with col_input:
-    transcript_text = st.text_area(
-        label="Transcript",
-        placeholder="Paste your meeting transcript here...",
-        height=280,
-        label_visibility="collapsed"
-    )
+    tab_upload, tab_paste = st.tabs(["📁 Upload file", "✏️ Paste text"])
+
+    transcript_text = ""
+
+    with tab_upload:
+        uploaded_file = st.file_uploader(
+            "Upload a .txt transcript file",
+            type=["txt"],
+            label_visibility="collapsed"
+        )
+        if uploaded_file is not None:
+            transcript_text = uploaded_file.read().decode("utf-8")
+            st.success(f"Loaded: {uploaded_file.name} ({len(transcript_text):,} characters)",
+                       icon="✅")
+
+    with tab_paste:
+        pasted_text = st.text_area(
+            label="Paste transcript",
+            placeholder="Paste your meeting transcript here...",
+            height=240,
+            label_visibility="collapsed"
+        )
+        if pasted_text.strip():
+            transcript_text = pasted_text
 
 with col_config:
     meeting_title = st.text_input(
         "Meeting title",
         placeholder="e.g. Product all-hands",
-        help="Used in the Slack message header"
+        help="Used in the Slack message header and history sidebar"
     )
     meeting_date = st.date_input(
         "Meeting date",
         value=datetime.date.today(),
         help="Helps resolve relative dates like 'this week' and 'next Friday'"
     )
+    st.caption(f"Day: {DAY_NAMES[meeting_date.weekday()]}")
+
     run_button = st.button(
-        "Run pipeline",
+        "▶ Run pipeline",
         type="primary",
         use_container_width=True,
         disabled=not transcript_text.strip()
@@ -114,19 +186,17 @@ with col_config:
 # PIPELINE EXECUTION
 # ================================================================
 if run_button and transcript_text.strip():
-    # Reset state for new run
-    st.session_state.feedback      = {}
-    st.session_state.slack_sent    = False
-    st.session_state.feedback_saved = False
+    reset_session()
 
-    # Write transcript to a temp file — pipeline expects a file path
+    # Write to temp file — pipeline expects a filename
     tmp_path = os.path.join(
         os.path.dirname(__file__), "..", "data", "raw", "_temp_transcript.txt"
     )
     with open(tmp_path, "w", encoding="utf-8") as f:
         f.write(transcript_text)
 
-    meeting_date_str = meeting_date.isoformat()
+    # Build full date string with day name — fixes vague relative date resolution
+    meeting_date_str = meeting_date_string(meeting_date)
 
     with st.spinner("Running pipeline — classifying, extracting, applying guardrail..."):
         result = run_pipeline(
@@ -136,6 +206,11 @@ if run_button and transcript_text.strip():
             meeting_date=meeting_date_str
         )
 
+    # Tag with display title for sidebar history
+    result["_title"] = meeting_title or meeting_date.isoformat()
+
+    # Save to history and set as current
+    st.session_state.history.append(result)
     st.session_state.pipeline_result = result
     st.rerun()
 
@@ -152,16 +227,14 @@ if st.session_state.pipeline_result:
     st.divider()
     st.subheader("2. Extracted items")
 
-    # --- Stats row ---
     m1, m2, m3, m4 = st.columns(4)
-    m1.metric("Total items",   stats["total_items"])
-    m2.metric("Auto-publish",  stats["confident_count"])
-    m3.metric("Flagged",       stats["flagged_count"])
+    m1.metric("Total items",    stats["total_items"])
+    m2.metric("Auto-publish",   stats["confident_count"])
+    m3.metric("Flagged",        stats["flagged_count"])
     m4.metric("Avg confidence", f"{stats['avg_confidence']:.0%}")
 
     st.caption("Auto-publish items are ready to send to Slack. Flagged items need your review first.")
 
-    # --- Confident items ---
     if confident:
         decisions = [i for i in confident if i["label"] == "decision"]
         actions   = [i for i in confident if i["label"] == "action"]
@@ -192,6 +265,7 @@ if st.session_state.pipeline_result:
     else:
         st.info("No high-confidence items found. Check flagged items below.")
 
+
     # ================================================================
     # SECTION 3 — FLAGGED ITEMS
     # ================================================================
@@ -209,9 +283,7 @@ if st.session_state.pipeline_result:
                 col_info, col_btns = st.columns([4, 1])
 
                 with col_info:
-                    st.markdown(
-                        f"{label_icon(item['label'])} **{item['text']}**"
-                    )
+                    st.markdown(f"{label_icon(item['label'])} **{item['text']}**")
                     owner = f"Owner: {item['owner']} · " if item["owner"] else ""
                     date  = f"Due: {item['due_date']} · " if item["due_date"] else ""
                     st.caption(
@@ -221,7 +293,6 @@ if st.session_state.pipeline_result:
 
                 with col_btns:
                     current = st.session_state.feedback.get(idx)
-
                     if current == "correct":
                         st.success("Confirmed", icon="✅")
                     elif current == "incorrect":
@@ -241,23 +312,19 @@ if st.session_state.pipeline_result:
                                 st.session_state.feedback[idx] = "incorrect"
                                 st.rerun()
 
-        # Save feedback button
         reviewed = len(st.session_state.feedback)
         if reviewed > 0:
             st.caption(f"{reviewed} of {len(flagged)} items reviewed.")
-            if st.button(
-                "Save feedback",
-                disabled=st.session_state.feedback_saved,
-                use_container_width=False
-            ):
+            if st.button("Save feedback",
+                         disabled=st.session_state.feedback_saved,
+                         use_container_width=False):
                 save_feedback_to_csv(result, st.session_state.feedback)
                 st.session_state.feedback_saved = True
                 st.rerun()
 
             if st.session_state.feedback_saved:
                 st.success(
-                    f"Feedback saved to data/feedback.csv — "
-                    f"{reviewed} item(s) recorded.",
+                    f"Feedback saved to data/feedback.csv — {reviewed} item(s) recorded.",
                     icon="✅"
                 )
 
@@ -272,22 +339,14 @@ if st.session_state.pipeline_result:
     if st.session_state.slack_sent:
         st.success("Sent to Slack successfully.", icon="✅")
     else:
-        if st.button(
-            "Send to Slack",
-            type="primary",
-            use_container_width=False
-        ):
+        if st.button("Send to Slack", type="primary", use_container_width=False):
             with st.spinner("Posting to Slack..."):
                 slack_result = send_to_slack(result, meeting_title=title_for_slack)
-
             if slack_result["success"]:
                 st.session_state.slack_sent = True
                 st.rerun()
             else:
-                st.error(
-                    f"Failed to send: {slack_result['message']}",
-                    icon="❌"
-                )
+                st.error(f"Failed to send: {slack_result['message']}", icon="❌")
 
         st.caption(
             "Only auto-published items are sent. "
