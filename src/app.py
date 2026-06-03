@@ -8,7 +8,8 @@ import streamlit as st
 sys.path.insert(0, os.path.dirname(__file__))
 
 from pipeline     import run_pipeline
-from slack_sender import send_to_slack
+from slack_sender import (send_to_slack, load_name_map, save_name_map,
+                         get_unmapped_owners, preview_slack_message)
 
 # ================================================================
 # PAGE CONFIG
@@ -88,7 +89,7 @@ def reset_session():
 
 
 # ================================================================
-# SIDEBAR — session history
+# SIDEBAR — session history + settings
 # ================================================================
 with st.sidebar:
     st.markdown("### 📋 MeetBrief")
@@ -98,11 +99,11 @@ with st.sidebar:
     if st.session_state.history:
         st.markdown("**This session**")
         for i, past in enumerate(reversed(st.session_state.history)):
-            idx      = len(st.session_state.history) - 1 - i
-            label    = past.get("_title", past["transcript_id"])
-            n_items  = past["stats"]["total_items"]
-            n_flag   = past["stats"]["flagged_count"]
-            caption  = f"{n_items} items · {n_flag} flagged"
+            idx     = len(st.session_state.history) - 1 - i
+            label   = past.get("_title", past["transcript_id"])
+            n_items = past["stats"]["total_items"]
+            n_flag  = past["stats"]["flagged_count"]
+            caption = f"{n_items} items · {n_flag} flagged"
             if st.button(f"📄 {label}", key=f"history_{idx}",
                          help=caption, use_container_width=True):
                 st.session_state.pipeline_result = past
@@ -113,6 +114,65 @@ with st.sidebar:
             st.caption(caption)
     else:
         st.caption("Past runs will appear here.")
+
+    st.divider()
+
+    # --- Settings: name map editor ---
+    with st.expander("⚙️ Settings — name map"):
+        st.caption(
+            "Map first names from transcripts to Slack @handles. "
+            "Owners found here will be @mentioned in the Slack message."
+        )
+        name_map = load_name_map()
+
+        if name_map:
+            st.markdown("**Current mappings**")
+            updated_map = {}
+            names_to_remove = []
+            for name, handle in name_map.items():
+                col_n, col_h, col_x = st.columns([2, 2, 1])
+                with col_n:
+                    new_name = st.text_input(
+                        "Name", value=name,
+                        key=f"nm_name_{name}",
+                        label_visibility="collapsed"
+                    )
+                with col_h:
+                    new_handle = st.text_input(
+                        "Handle", value=handle,
+                        key=f"nm_handle_{name}",
+                        label_visibility="collapsed"
+                    )
+                with col_x:
+                    if st.button("✕", key=f"nm_del_{name}",
+                                 help=f"Remove {name}"):
+                        names_to_remove.append(name)
+                if name not in names_to_remove and new_name.strip():
+                    updated_map[new_name.strip()] = new_handle.strip()
+        else:
+            updated_map = {}
+            st.caption("No mappings yet. Add one below.")
+
+        st.markdown("**Add new mapping**")
+        col_a, col_b = st.columns(2)
+        with col_a:
+            new_name_input   = st.text_input("First name", key="nm_new_name",
+                                              placeholder="e.g. Ananya")
+        with col_b:
+            new_handle_input = st.text_input("Slack handle", key="nm_new_handle",
+                                              placeholder="e.g. @ananya")
+
+        if st.button("Add", use_container_width=True):
+            if new_name_input.strip() and new_handle_input.strip():
+                updated_map[new_name_input.strip()] = new_handle_input.strip()
+                save_name_map(updated_map)
+                st.success("Saved.", icon="✅")
+                st.rerun()
+
+        if st.button("Save changes", use_container_width=True, type="primary"):
+            save_name_map(updated_map)
+            st.success("Name map saved.", icon="✅")
+            st.rerun()
 
     st.divider()
     if st.button("🗑️ Clear current run", use_container_width=True):
@@ -336,12 +396,24 @@ if st.session_state.pipeline_result:
 
     title_for_slack = meeting_title or result["transcript_id"]
 
+    # --- Unmapped owners warning ---
+    current_name_map = load_name_map()
+    unmapped = get_unmapped_owners(result, current_name_map)
+    if unmapped:
+        st.warning(
+            f"{len(unmapped)} owner(s) not in your name map — "
+            f"they will appear as bold names instead of @mentions: "
+            f"{', '.join(unmapped)}. Add them in Settings (sidebar) to enable @mentions.",
+            icon="⚠️"
+        )
+
     if st.session_state.slack_sent:
         st.success("Sent to Slack successfully.", icon="✅")
     else:
         if st.button("Send to Slack", type="primary", use_container_width=False):
             with st.spinner("Posting to Slack..."):
-                slack_result = send_to_slack(result, meeting_title=title_for_slack)
+                slack_result = send_to_slack(result, meeting_title=title_for_slack,
+                                                  name_map=current_name_map)
             if slack_result["success"]:
                 st.session_state.slack_sent = True
                 st.rerun()
